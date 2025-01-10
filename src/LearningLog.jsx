@@ -1,15 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 import { FormGroups } from './components/FormGroups'
 import { PreviewList } from './components/PreviewList'
 import { LogList } from './components/LogList'
 import { ProgressTracker } from './components/ProgressTracker'
 
 
+const supabaseUrl = 'https://zoxklvmfjkmmooqzscem.supabase.co'
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+const queryAllLogs = async () => {
+  const { data, error } = await supabase
+    .from('study-record')
+    .select('*')
+  if (error) {
+    throw error
+  }
+  return data
+}
+
 export const LearningLog = () => {
   const [logTitle, setLogTitle] = useState('')
   const [logTime, setLogTime] = useState(0)
   const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    setLoading(true)
+    queryAllLogs().then((data) => {
+      setRecords(data)
+      setLoading(false)
+    })
+  }, [])
 
   const onChangeLogTitle = (e) => {
     setLogTitle(e.target.value)
@@ -46,7 +70,7 @@ export const LearningLog = () => {
       <button onClick={() => addLearningLog({ records, title: logTitle, time: logTime })}>登録</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <ProgressTracker title="学習時間" unit="h" max="1000" items={records} target_key="time" />
-      <LogList logs={records} />
+      {loading ? <p>データのロード中です</p> : <LogList logs={records} />}
     </>
   )
 }
