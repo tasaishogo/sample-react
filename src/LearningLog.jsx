@@ -10,15 +10,6 @@ const supabaseUrl = 'https://zoxklvmfjkmmooqzscem.supabase.co'
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-const queryAllLogs = async () => {
-  const { data, error } = await supabase
-    .from('study-record')
-    .select('*')
-  if (error) {
-    throw error
-  }
-  return data
-}
 
 export const LearningLog = () => {
   const [logTitle, setLogTitle] = useState('')
@@ -26,6 +17,36 @@ export const LearningLog = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const queryAllLogs = async () => {
+    const { data, error } = await supabase
+      .from('study-record')
+      .select('*')
+    if (error) {
+      throw error
+    }
+    return data
+  }
+
+  const addLearningLog = async ({ records, title, time }) => {
+    if (title === '') {
+      setError('学習項目を入力してください')
+      return
+    } else if (time === 0 || time === '') {
+      setError('学習時間を入力してください')
+      return
+    }
+    const { error } = await supabase
+      .from('study-record')
+      .insert([{ title, time }])
+    if (error) {
+      throw error
+    }
+    setRecords([...records, { title, time }])
+    setLogTitle('')
+    setLogTime(0)
+    error !== '' && setError('');
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -47,20 +68,6 @@ export const LearningLog = () => {
     { label: "学習項目", key: "title", type: "text", placeholder: "学習項目の概要を入力してください", value: logTitle, onChange: onChangeLogTitle },
     { label: "学習時間", key: "time", type: "number", placeholder: "学習時間を入力してください", value: logTime, onChange: onChangeLogTime }
   ]
-
-  const addLearningLog = ({ records, title, time }) => {
-    if (title === '') {
-      setError('学習項目を入力してください')
-      return
-    } else if (time === 0 || time === '') {
-      setError('学習時間を入力してください')
-      return
-    }
-    setRecords([...records, { title, time }])
-    setLogTitle('')
-    setLogTime(0)
-    error !== '' && setError('');
-  }
 
   return (
     <>
