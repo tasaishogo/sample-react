@@ -1,3 +1,5 @@
+import React from 'react';
+
 const styles = {
     formGroup: {
         display: 'flex',
@@ -16,7 +18,7 @@ const styles = {
     },
 };
 
-export const FormGroups = ({ items }) => {
+export const FormGroups = React.memo(({ items }) => {
     return (
         <div>
             {items.map(({ label, key, type, placeholder, value, onChange }) => (
@@ -27,4 +29,4 @@ export const FormGroups = ({ items }) => {
             ))}
         </div>
     )
-}
+})

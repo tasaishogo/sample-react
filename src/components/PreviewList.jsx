@@ -1,4 +1,6 @@
-export const PreviewList = ({ items }) => {
+import React from 'react';
+
+export const PreviewList = React.memo(({ items }) => {
     return (
         <div>
             {items.map(({ label, value }) => (
@@ -6,4 +8,4 @@ export const PreviewList = ({ items }) => {
             ))}
         </div>
     )
-}
+})

@@ -1,5 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useAtom } from 'jotai'
 import { createClient } from '@supabase/supabase-js'
+import { recorder } from './atoms/logAtom'
 import { FormGroups } from './components/FormGroups'
 import { PreviewList } from './components/PreviewList'
 import { LogList } from './components/LogList'
@@ -12,10 +14,10 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 
 export const LearningLog = () => {
-  const [logTitle, setLogTitle] = useState('')
+  const [logTitle, setLogTitle] = useState("")
   const [logTime, setLogTime] = useState(0)
-  const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [records, setRecords] = useAtom(recorder)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("");
 
   const queryAllLogs = async () => {
@@ -28,7 +30,7 @@ export const LearningLog = () => {
     return data
   }
 
-  const addLearningLog = async ({ records, title, time }) => {
+  const addLearningLog = async ({ title, time }) => {
     if (title === '') {
       setError('学習項目を入力してください')
       return
@@ -36,13 +38,15 @@ export const LearningLog = () => {
       setError('学習時間を入力してください')
       return
     }
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('study-record')
       .insert([{ title, time }])
+      .select()
     if (error) {
       throw error
     }
-    setRecords([...records, { title, time }])
+    const id = data[0]['id']
+    setRecords([...records, { id, title, time }])
     setLogTitle('')
     setLogTime(0)
     error !== '' && setError('');
@@ -56,28 +60,28 @@ export const LearningLog = () => {
     })
   }, [])
 
-  const onChangeLogTitle = (e) => {
+  const onChangeLogTitle = useCallback((e) => {
     setLogTitle(e.target.value)
-  }
+  }, [])
 
-  const onChangeLogTime = (e) => {
+  const onChangeLogTime = useCallback((e) => {
     setLogTime(e.target.value)
-  }
+  }, [])
 
-  const InputItems = [
+  const InputItems = useMemo(() => [
     { label: "学習項目", key: "title", type: "text", placeholder: "学習項目の概要を入力してください", value: logTitle, onChange: onChangeLogTitle },
     { label: "学習時間", key: "time", type: "number", placeholder: "学習時間を入力してください", value: logTime, onChange: onChangeLogTime }
-  ]
+  ], [logTitle, logTime])
 
   return (
     <>
       <h1>学習記録</h1>
       <FormGroups items={InputItems} />
       <PreviewList items={InputItems} />
-      <button onClick={() => addLearningLog({ records, title: logTitle, time: logTime })}>登録</button>
+      <button onClick={() => addLearningLog({ title: logTitle, time: logTime })}>登録</button>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <ProgressTracker title="学習時間" unit="h" max="1000" items={records} target_key="time" />
-      {loading ? <p>データのロード中です</p> : <LogList logs={records} />}
+      <ProgressTracker title="学習時間" unit="h" max="1000" target_key="time" />
+      {loading ? <p>データのロード中です</p> : <LogList supabase={supabase} />}
     </>
   )
 }
