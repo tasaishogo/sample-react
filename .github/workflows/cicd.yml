@@ -17,6 +17,8 @@ jobs:
           VITE_SUPABASE_KEY: ${{secrets.SUPABASE_KEY}}
       - name: Run Vitest
         run: npm run test
+        env:
+          VITE_SUPABASE_KEY: ${{secrets.SUPABASE_KEY}}
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
